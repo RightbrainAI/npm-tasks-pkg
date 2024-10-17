@@ -2,7 +2,7 @@
   "name": "npm-tasks-pkg",
   "repository": {
     "type": "git",
-    "url": "https://github.com/RightbrainAI/npm-tasks-pkg.git"
+    "url": "git+https://github.com/RightbrainAI/npm-tasks-pkg.git"
   },
   "version": "0.0.1",
   "description": "",
