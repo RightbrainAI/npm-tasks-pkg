@@ -1,9 +1,9 @@
 function NewAuthClient(tokenURL) {
-    return AuthClient(tokenURL)
+    return new AuthClient(tokenURL)
 }
 
 function NewTasksClient(apiHost, accessToken) {
-    return TasksClient(apiHost, accessToken)
+    return new TasksClient(apiHost, accessToken)
 }
 
  class AuthClient {
