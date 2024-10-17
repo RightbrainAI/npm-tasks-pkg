@@ -15,6 +15,7 @@ jobs:
         with:
           registry-url: 'https://npm.pkg.github.com'
           scope: '@RightbrainAI'
+      - run: npm version 0.0.$(date +%s)
       - run: npm publish
         env:
             NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,12 +1,5 @@
 {
-  "name": "npm-tasks-pkg",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/RightbrainAI/npm-tasks-pkg.git"
-  },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
+  "name": "@RightbrainAI/npm-tasks-pkg",
   "version": "0.0.1",
   "description": "",
   "main": "index.js",
