@@ -1,8 +1,8 @@
 name: Publish package to GitHub Packages
 on:
-  release:
-    types:
-      - published
+  push:
+    branches:
+      - main
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -15,7 +15,10 @@ jobs:
         with:
           registry-url: 'https://npm.pkg.github.com'
           scope: '@RightbrainAI'
-      - run: npm version 0.0.$(date +%s)
+      - run: |
+            git config user.name "GitHub Actions"
+            git config user.email noreply@github.com
+            npm version 0.0.$(date +%s)
       - run: npm publish
         env:
             NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
