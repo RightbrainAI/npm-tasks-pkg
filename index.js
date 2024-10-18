@@ -50,6 +50,7 @@ function NewTasksClient(apiHost, accessToken) {
       const response = await fetch(await this.getTaskCreateURL(), {
          method: 'POST',
          headers: {
+            'Content-Type': 'application/json',
             Authorization: `Bearer ${this.accessToken}`
          },
          body: JSON.stringify(definition)
