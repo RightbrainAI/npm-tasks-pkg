@@ -46,10 +46,25 @@ function NewTasksClient(apiHost, accessToken) {
        this.apiHost = apiHost
        this.accessToken = accessToken
     }
+    async Create(definition) {
+      const response = await fetch(await this.getTaskCreateURL(), {
+         method: 'POST',
+         headers: {
+            Authorization: `Bearer ${this.accessToken}`
+         },
+         body: JSON.stringify(definition)
+      })
+      if (response.status !== 201) {
+         throw new Error(
+            `Error creating Task, expected status code of 201, but got ${response.status}: ${response.statusText}`
+         )
+      }
+      return await response.json()
+    }
     async Run(taskID, taskInput, taskRevision) {
        this.assertTaskInputIsJSON(taskInput)
        this.assertTaskInputSize(taskInput)
-       const response = await fetch(this.getTaskRunURL(taskID, taskRevision), {
+       const response = await fetch(await this.getTaskRunURL(taskID, taskRevision), {
           method: 'POST',
           headers: {
              Authorization: `Bearer ${this.accessToken}`
@@ -63,8 +78,12 @@ function NewTasksClient(apiHost, accessToken) {
        }
        return await response.json()
     }
+    async getTaskCreateURL() {
+      const clientDetails = await this.getClientDetails(this.accessToken)
+      return `https://${this.apiHost}/api/v1/org/${clientDetails.org_id}/project/${clientDetails.project_id}/task`
+   }
     async getTaskRunURL(taskID, taskRevision) {
-       const clientDetails = this.getClientDetails(this.accessToken)
+       const clientDetails = await this.getClientDetails(this.accessToken)
        let url = `https://${this.apiHost}/api/v1/org/${clientDetails.org_id}/project/${clientDetails.project_id}/task/${taskID}/run`
        if (taskRevision) {
           url += `?revision=${taskRevision}`
