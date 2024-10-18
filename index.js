@@ -63,14 +63,14 @@ function NewTasksClient(apiHost, accessToken) {
       return await response.json()
     }
     async Run(taskID, taskInput, taskRevision) {
-       this.assertTaskInputIsJSON(taskInput)
-       this.assertTaskInputSize(taskInput)
+       const data = JSON.stringify(taskInput)
+       this.assertTaskInputSize(data)
        const response = await fetch(await this.getTaskRunURL(taskID, taskRevision), {
           method: 'POST',
           headers: {
              Authorization: `Bearer ${this.accessToken}`
           },
-          body: this.getTaskInputFormData(taskInput)
+          body: this.getTaskInputFormData(data)
        })
        if (response.status !== 200) {
           throw new Error(
@@ -90,17 +90,6 @@ function NewTasksClient(apiHost, accessToken) {
           url += `?revision=${taskRevision}`
        }
        return url
-    }
-    assertTaskInputIsJSON(taskInput) {
-       try {
-          JSON.parse(taskInput)
-       } catch (e) {
-          throw new Error(
-             'Error running Task, expected task input to be valid JSON data', {
-                cause: e
-             }
-          )
-       }
     }
     assertTaskInputSize(taskInput) {
        if (taskInput.length > 128000) {
