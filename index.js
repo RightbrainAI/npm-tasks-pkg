@@ -5,14 +5,9 @@ const configDefaults = {
    clientSecret: null,
 }
 
-
-function NewAuthClient(authHost) {
-    return new AuthClient(authHost)
-}
-
 function NewTasksClient(userConfig) {
     config = {...configDefaults, ...userConfig}
-    authClient = NewAuthClient(config.authHost, config.clientID, config.clientSecret)
+    authClient = new AuthClient(config.authHost, config.clientID, config.clientSecret)
     return new TasksClient(authClient, config.apiHost)
 }
 
@@ -143,5 +138,4 @@ function NewTasksClient(userConfig) {
  }
  module.exports = {
     NewTasksClient,
-    NewAuthClient
  }
