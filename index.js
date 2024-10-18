@@ -55,9 +55,9 @@ function NewTasksClient(apiHost, accessToken) {
          },
          body: JSON.stringify(definition)
       })
-      if (response.status !== 201) {
+      if (response.status !== 200) {
          throw new Error(
-            `Error creating Task, expected status code of 201, but got ${response.status}: ${response.statusText}`
+            `Error creating Task, expected status code of 200, but got ${response.status}: ${response.statusText}`
          )
       }
       return await response.json()
