@@ -1,20 +1,32 @@
-function NewAuthClient(tokenURL) {
-    return new AuthClient(tokenURL)
+const configDefaults = {
+   apiHost: 'app.rightbrain.ai',
+   authHost: 'oauth.rightbrain.ai',
+   clientID: null,
+   clientSecret: null,
 }
 
-function NewTasksClient(apiHost, accessToken) {
-    return new TasksClient(apiHost, accessToken)
+
+function NewAuthClient(authHost) {
+    return new AuthClient(authHost)
+}
+
+function NewTasksClient(userConfig) {
+    config = {...configDefaults, ...userConfig}
+    authClient = NewAuthClient(config.authHost, config.clientID, config.clientSecret)
+    return new TasksClient(authClient, config.apiHost)
 }
 
  class AuthClient {
-    constructor(tokenURL) {
-       this.tokenURL = tokenURL
+    constructor(authHost, clientID, clientSecret) {
+       this.authHost = authHost
+       this.clientID = clientID
+       this.clientSecret = clientSecret
     }
-    async CreateToken(clientId, clientSecret) {
-       const res = await fetch(this.tokenURL, {
+    async CreateToken() {
+       const res = await fetch(`https://${this.authHost}/oauth2/token`, {
           method: 'POST',
           headers: {
-             Authorization: `Basic ${this.GetBasicAuthorizationHeader(clientId, clientSecret)}`
+             Authorization: `Basic ${this.GetBasicAuthorizationHeader(this.clientID, this.clientSecret)}`
           },
           body: this.GetFormDataWithGrantType('client_credentials')
        })
@@ -31,8 +43,8 @@ function NewTasksClient(apiHost, accessToken) {
        }
        return data.access_token
     }
-    GetBasicAuthorizationHeader(clientId, clientSecret) {
-       return btoa(`${clientId}:${clientSecret}`)
+    GetBasicAuthorizationHeader(clientID, clientSecret) {
+       return btoa(`${clientID}:${clientSecret}`)
     }
     GetFormDataWithGrantType(grantType) {
        const formData = new FormData()
@@ -42,16 +54,17 @@ function NewTasksClient(apiHost, accessToken) {
  }
  
  class TasksClient {
-    constructor(apiHost, accessToken) {
+    constructor(authClient, apiHost) {
+       this.authClient = authClient
        this.apiHost = apiHost
-       this.accessToken = accessToken
     }
     async Create(definition) {
-      const response = await fetch(await this.getTaskCreateURL(), {
+      const accessToken = await this.authClient.CreateToken()
+      const response = await fetch(await this.getTaskCreateURL(accessToken), {
          method: 'POST',
          headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${this.accessToken}`
+            Authorization: `Bearer ${accessToken}`
          },
          body: JSON.stringify(definition)
       })
@@ -65,10 +78,11 @@ function NewTasksClient(apiHost, accessToken) {
     async Run(taskID, taskInput, taskRevision) {
        const data = JSON.stringify(taskInput)
        this.assertTaskInputSize(data)
-       const response = await fetch(await this.getTaskRunURL(taskID, taskRevision), {
+       const accessToken = await this.authClient.CreateToken()
+       const response = await fetch(await this.getTaskRunURL(accessToken, taskID, taskRevision), {
           method: 'POST',
           headers: {
-             Authorization: `Bearer ${this.accessToken}`
+            Authorization: `Bearer ${accessToken}`
           },
           body: this.getTaskInputFormData(data)
        })
@@ -79,12 +93,12 @@ function NewTasksClient(apiHost, accessToken) {
        }
        return await response.json()
     }
-    async getTaskCreateURL() {
-      const clientDetails = await this.getClientDetails(this.accessToken)
+    async getTaskCreateURL(accessToken) {
+      const clientDetails = await this.getClientDetails(accessToken)
       return `https://${this.apiHost}/api/v1/org/${clientDetails.org_id}/project/${clientDetails.project_id}/task`
    }
-    async getTaskRunURL(taskID, taskRevision) {
-       const clientDetails = await this.getClientDetails(this.accessToken)
+    async getTaskRunURL(accessToken, taskID, taskRevision) {
+       const clientDetails = await this.getClientDetails(accessToken)
        let url = `https://${this.apiHost}/api/v1/org/${clientDetails.org_id}/project/${clientDetails.project_id}/task/${taskID}/run`
        if (taskRevision) {
           url += `?revision=${taskRevision}`
@@ -107,7 +121,7 @@ function NewTasksClient(apiHost, accessToken) {
              `Error running task, cannot get client details, expected access token to not be empty`
           )
        }
-       const res = await fetch(this.getAPIWhoAmIURL(this.apiHost), {
+       const res = await fetch(`https://${this.apiHost}/api/v1/whoami`, {
           method: 'GET',
           headers: {
              Authorization: `Bearer ${accessToken}`
@@ -125,9 +139,6 @@ function NewTasksClient(apiHost, accessToken) {
           )
        }
        return details.client
-    }
-    getAPIWhoAmIURL(host) {
-       return `https://${host}/api/v1/whoami`
     }
  }
  module.exports = {
